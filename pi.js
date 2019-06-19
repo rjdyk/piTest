@@ -93,6 +93,8 @@ function takePicture() {
       return data;
     }
   });
+  console.log("image captured");
+  return `images/camera_img`;
 }
 
 // Analyzes photo and returns states
@@ -122,7 +124,7 @@ function uploadImage(img_path, containerName, containerURL, aborter, url){
 }
 
 // Driver
-function execute(){
+async function execute(){
   const containerName = 'pi_image_upload';
   const credentials = new SharedKeyCredential(STORAGE_ACCOUNT_NAME, ACCOUNT_ACCESS_KEY);
   const pipeline = StorageURL.newPipeline(credentials);
@@ -130,22 +132,21 @@ function execute(){
   const serviceURL = new ServiceURL(url, pipeline);   
   const containerURL = ContainerURL.fromServiceURL(serviceURL, containerName);
   const aborter = Aborter.timeout(ONE_MINUTE);
-
+  const uploadPath = "";
 
   // Create container
-  configureBlobStorage(containerName, containerURL, aborter);
+  configureBlobStorage(containerName, containerURL, aborter).then(()=>{
+    takePicture.then((img_path)=>{
+      analyzeImage(img_path).then((states)=>{
+        uploadPath = uploadImage(img_path, containerName, containerURL, aborter, url);
+      });
+    });
+  });
 
   // Create images directory to store pi images
   createPath();
 
-  // Use node_webcam module to take and analyze pictures
-  var img_path = takePicture();
-
-  // Analyzes the photo and returns any states
-  const states =  analyzeImage(img_path);
-
-  // upload images to blob storage
-  const uploadPath = uploadImage(img_path, containerName, containerURL, aborter, url);
+  
 
   return JSON.stringify({
     "img_url": uploadPath,
@@ -153,4 +154,4 @@ function execute(){
   })
 }
 
-execute().catch(err => console.log(err));
+execute()
