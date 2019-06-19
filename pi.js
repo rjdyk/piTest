@@ -99,7 +99,7 @@ function takePicture() {
 
 // Analyzes photo and returns states
 function analyzeImage(img_path){
-  return {};
+  return {"test": 0};
 }
 
 // Uploads image to blob storage
@@ -132,26 +132,24 @@ async function execute(){
   const serviceURL = new ServiceURL(url, pipeline);   
   const containerURL = ContainerURL.fromServiceURL(serviceURL, containerName);
   const aborter = Aborter.timeout(ONE_MINUTE);
-  const uploadPath = "";
+  const output = {};
 
-  // Create container
-  configureBlobStorage(containerName, containerURL, aborter).then(()=>{
-    takePicture.then((img_path)=>{
-      analyzeImage(img_path).then((states)=>{
-        uploadPath = uploadImage(img_path, containerName, containerURL, aborter, url);
-      });
-    });
-  });
-
-  // Create images directory to store pi images
   createPath();
 
-  
-
-  return JSON.stringify({
+  await configureBlobStorage(containerName, containerURL, aborter);
+  const img_path = await takePicture();
+  const states = await analyzeImage(img_path);
+  const uploadPath = await uploadImage(img_path, containerName, containerURL, aborter, url);
+  output = JSON.stringify({
     "img_url": uploadPath,
     "states": states
   })
+
+
+  // Create images directory to store pi images
+  
+  console.log(output);
+  return output;
 }
 
 execute()
