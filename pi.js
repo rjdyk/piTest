@@ -72,10 +72,14 @@ function createPath() {
 }
 
 // Configure Blob Storage for uploading
-async function configureBlobStorage(containerName, containerURL, aborter) {
+function configureBlobStorage(containerName, containerURL, aborter) {
 
   // Creates container
-  await containerURL.create(aborter);
+  try{
+    containerURL.create(aborter);
+  }catch(e){
+    throw e;
+  }
   console.log(`Container: "${containerName}" is created`);
 
 }
@@ -135,7 +139,6 @@ async function execute(){
   const output = {};
 
   createPath();
-
   await configureBlobStorage(containerName, containerURL, aborter);
   const img_path = await takePicture();
   const states = await analyzeImage(img_path);
