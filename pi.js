@@ -51,7 +51,7 @@ const opts = {
 
   //Logging
 
-  verbose: fals
+  verbose: false
 };
 
 if (process.env.NODE_ENV !== "production") {
@@ -67,12 +67,12 @@ const ONE_MINUTE = 60 * 1000;
 // Create path for image storage
 function createPath() {
   fs.mkdir('images', {}, (err)=>{
-    if (err) console.log(error);
+    if (err) console.log(err);
   });
 }
 
 // Configure Blob Storage for uploading
-function configureBlobStorage(containerName, containerURL, aborter) {
+async function configureBlobStorage(containerName, containerURL, aborter) {
 
   // Creates container
   await containerURL.create(aborter);
@@ -103,11 +103,16 @@ function analyzeImage(img_path){
 // Uploads image to blob storage
 function uploadImage(img_path, containerName, containerURL, aborter, url){
   
-  img_path = path.resolve(img_path);
-  const imgName = path.basename(filePath);
+  img_path = path.resolve(toString(img_path));
+  const imgName = path.basename(img_path);
   const blockBlobURL = BlockBlobURL.fromContainerURL(containerURL, imgName);
 
-  uploadFileToBlockBlob(aborter, filePath, blockBlobURL);
+  try{
+    uploadFileToBlockBlob(aborter, img_path, blockBlobURL);
+  }catch(err){
+    throw err;
+  }
+  
 
   const uploadPath = `${url}/${containerName}`;
 
@@ -117,7 +122,7 @@ function uploadImage(img_path, containerName, containerURL, aborter, url){
 }
 
 // Driver
-async function execute(){
+function execute(){
   const containerName = 'pi_image_upload';
   const credentials = new SharedKeyCredential(STORAGE_ACCOUNT_NAME, ACCOUNT_ACCESS_KEY);
   const pipeline = StorageURL.newPipeline(credentials);
@@ -148,4 +153,4 @@ async function execute(){
   })
 }
 
-// execute().catch(err => console.log(err));
+execute().catch(err => console.log(err));
