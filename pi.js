@@ -139,19 +139,27 @@ async function execute(){
   const output = {};
 
   createPath();
-  await configureBlobStorage(containerName, containerURL, aborter);
-  const img_path = await takePicture();
-  const states = await analyzeImage(img_path);
-  const uploadPath = await uploadImage(img_path, containerName, containerURL, aborter, url);
-  output = JSON.stringify({
-    "img_url": uploadPath,
-    "states": states
-  })
+  try{
+    await configureBlobStorage(containerName, containerURL, aborter);
+    console.log("configureBlobStorage complete");
+    const img_path = await takePicture();
+    console.log("takePicture complete");
+    const states = await analyzeImage(img_path);
+    console.log("analyzeImage complete");
+    const uploadPath = await uploadImage(img_path, containerName, containerURL, aborter, url);
+    console.log("uploadImage complete");
+    output = JSON.stringify({
+      "img_url": uploadPath,
+      "states": states
+    })
 
 
-  // Create images directory to store pi images
-  
-  console.log(output);
+    // Create images directory to store pi images
+    
+    console.log(output);
+  }catch(e){
+    throw e;
+  }
   return output;
 }
 
