@@ -141,13 +141,13 @@ async function execute(){
   createPath();
   try{
     await configureBlobStorage(containerName, containerURL, aborter);
-    console.log("configureBlobStorage complete");
+    await console.log("configureBlobStorage complete");
     const img_path = await takePicture();
-    console.log("takePicture complete");
+    await console.log("takePicture complete");
     const states = await analyzeImage(img_path);
-    console.log("analyzeImage complete");
+    await console.log("analyzeImage complete");
     const uploadPath = await uploadImage(img_path, containerName, containerURL, aborter, url);
-    console.log("uploadImage complete");
+    await console.log("uploadImage complete");
     output = JSON.stringify({
       "img_url": uploadPath,
       "states": states
