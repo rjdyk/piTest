@@ -10,6 +10,7 @@ const {
   ServiceURL,
   SharedKeyCredential,
   StorageURL,
+  uploadStreamToBlockBlob,
   uploadFileToBlockBlob
 } = require("@azure/storage-blob");
 
@@ -63,6 +64,19 @@ const ACCOUNT_ACCESS_KEY = process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
 
 const ONE_MINUTE = 60 * 1000;
 
+async function showContainerNames(aborter, serviceURL) {
+  let response;
+  let marker;
+
+  do {
+    response = await serviceURL.listContainersSegment(aborter, marker);
+    marker = response.marker;
+    for (let container of response.containerItems) {
+      console.log(` - ${container.name}`);
+    }
+  } while (marker);
+}
+
 // Create path for image storage
 function createPath() {
   fs.mkdir("images", {}, err => {
@@ -80,18 +94,19 @@ function configureBlobStorage(containerName, containerURL, aborter) {
 // Takes image from usb camera and saves it to local file
 // Returns relative path to file
 function takePicture() {
-  const Webcam = NodeWebcam.create(opts);
-  Webcam.capture(`images/camera_img`, function(err, data) {
-    if (err) {
-      console.log(err);
-      throw err;
-    } else {
-      console.log(`Image saved in ${data}`);
-      return data;
-    }
-  });
-  console.log("image captured");
-  return `images/camera_img`;
+  //   const Webcam = NodeWebcam.create(opts);
+  //   Webcam.capture(`images/camera_img`, function(err, data) {
+  //     if (err) {
+  //       console.log(err);
+  //       throw err;
+  //     } else {
+  //       console.log(`Image saved in ${data}`);
+  //       return data;
+  //     }
+  //   });
+  //   console.log("image captured");
+  //   return `images/camera_img`;
+  return "./piDemo/camera_img.jpg";
 }
 
 // Analyzes photo and returns states
@@ -133,12 +148,9 @@ async function execute() {
   );
   const pipeline = StorageURL.newPipeline(credentials);
   const url = `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net`;
-  const serviceURL = new ServiceURL(
-    `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-    pipeline
-  );
+  const serviceURL = new ServiceURL(`https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net`, pipeline);
   const containerURL = ContainerURL.fromServiceURL(serviceURL, containerName);
-  const aborter = Aborter.timeout(0.5 * ONE_MINUTE);
+  const aborter = Aborter.timeout(.5 * ONE_MINUTE);
 
   //createPath();
 
@@ -154,13 +166,7 @@ async function execute() {
   const states = await analyzeImage(img_path);
   console.log("analyzeImage complete");
 
-  const uploadPath = await uploadImage(
-    img_path,
-    containerName,
-    containerURL,
-    aborter,
-    url
-  );
+  const uploadPath = await uploadImage(img_path, containerName, containerURL, aborter, url);
   console.log("uploadImage complete");
 
   var output = JSON.stringify({
